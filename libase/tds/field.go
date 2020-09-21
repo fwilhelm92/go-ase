@@ -132,6 +132,8 @@ type FieldData interface {
 
 	Value() interface{}
 	SetValue(interface{})
+
+	DataLength() int
 }
 
 // Base structs
@@ -140,10 +142,6 @@ type fieldFmtBase struct {
 	dataType types.DataType
 	name     string
 
-	// specific to TDS_ROWFMT2
-	// wide_row controls if the TDS_ROWFMT2 specific members are filled
-	// and written. It is set by TDS_ROWFMT2 when creating a field.
-	wide_row    bool
 	columnLabel string
 	catalogue   string
 	schema      string
@@ -322,9 +320,10 @@ func (field fieldFmtBaseScale) writeToScale(ch BytesChannel) (int, error) {
 }
 
 type fieldDataBase struct {
-	fmt    FieldFmt
-	status DataStatus
-	value  interface{}
+	fmt        FieldFmt
+	status     DataStatus
+	dataLength int
+	value      interface{}
 }
 
 func (field *fieldDataBase) setFormat(f FieldFmt) {
@@ -337,6 +336,10 @@ func (field fieldDataBase) Format() FieldFmt {
 
 func (field fieldDataBase) Status() DataStatus {
 	return field.status
+}
+
+func (field fieldDataBase) DataLength() int {
+	return field.dataLength
 }
 
 func (field *fieldDataBase) Value() interface{} {
@@ -380,19 +383,20 @@ func (field *fieldDataBase) readFrom(ch BytesChannel) (int, error) {
 		return n, err
 	}
 
-	length := field.fmt.LengthBytes()
+	field.dataLength = field.fmt.LengthBytes()
 	if !field.fmt.IsFixedLength() {
 		var err error
-		length, err = readLengthBytes(ch, field.fmt.LengthBytes())
+		field.dataLength, err = readLengthBytes(ch, field.fmt.LengthBytes())
+
 		if err != nil {
 			return n, fmt.Errorf("failed to read %d bytes of length: %w", field.fmt.LengthBytes(), err)
 		}
 		n += field.fmt.LengthBytes()
 	}
 
-	bs, err := ch.Bytes(length)
+	bs, err := ch.Bytes(field.dataLength)
 	if err != nil {
-		return n, fmt.Errorf("failed to read %d bytes: %w", length, err)
+		return n, fmt.Errorf("failed to read %d bytes: %w", field.dataLength, err)
 	}
 
 	field.value, err = field.fmt.DataType().GoValue(endian, bs)
@@ -400,8 +404,8 @@ func (field *fieldDataBase) readFrom(ch BytesChannel) (int, error) {
 		return n, fmt.Errorf("failed to parse field data: %w", err)
 	}
 
-	if len(bs) != length {
-		return n, fmt.Errorf("expected to read %d bytes of data, read %d", length, len(bs))
+	if len(bs) != field.dataLength {
+		return n, fmt.Errorf("expected to read %d bytes of data, read %d", field.dataLength, len(bs))
 	}
 
 	return n, nil
@@ -1129,7 +1133,6 @@ func readLengthBytes(ch BytesChannel, n int) (int, error) {
 	if err != nil {
 		return 0, ErrNotEnoughBytes
 	}
-
 	return length, nil
 }
 

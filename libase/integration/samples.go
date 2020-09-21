@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	//	"database/sql"
+
 	"github.com/SAP/go-ase/libase/types"
 )
 
@@ -19,6 +21,11 @@ var samplesBigInt = []int64{
 	math.MinInt64, math.MaxInt64,
 	-5000, -100, 0, 100, 5000,
 }
+
+////go:generate go run ./gen_type.go BigIntNull NullInt64 -columndef "BigInt null"
+//var samplesBigIntNull = []sql.NullInt64{
+//	{123, false},
+//}
 
 //go:generate go run ./gen_type.go Int int32
 var samplesInt = []int32{

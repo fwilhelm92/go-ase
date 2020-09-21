@@ -51,7 +51,7 @@ func (t DataType) goValue(endian binary.ByteOrder, bs []byte) (interface{}, erro
 	case INTN:
 		switch len(bs) {
 		case 0:
-			return 0, nil
+			return nil, nil
 		case 1:
 			return INT1.GoValue(endian, bs)
 		case 2:
@@ -78,7 +78,7 @@ func (t DataType) goValue(endian binary.ByteOrder, bs []byte) (interface{}, erro
 	case UINTN:
 		switch len(bs) {
 		case 0:
-			return 0, nil
+			return nil, nil
 		case 1:
 			return INT1.GoValue(endian, bs)
 		case 2:
@@ -101,7 +101,7 @@ func (t DataType) goValue(endian binary.ByteOrder, bs []byte) (interface{}, erro
 	case FLTN:
 		switch len(bs) {
 		case 0:
-			return 0, nil
+			return nil, nil
 		case 4:
 			return FLT4.GoValue(endian, bs)
 		case 8:
@@ -118,6 +118,9 @@ func (t DataType) goValue(endian binary.ByteOrder, bs []byte) (interface{}, erro
 		// Noop
 		return bs, nil
 	case CHAR, VARCHAR, TEXT, LONGCHAR:
+		if len(bs) == 0 {
+			return nil, nil
+		}
 		return string(bs), nil
 	case UNITEXT:
 		runes := []rune{}
@@ -165,6 +168,9 @@ func (t DataType) goValue(endian binary.ByteOrder, bs []byte) (interface{}, erro
 		dec.SetInt64(int64(int32(endian.Uint32(bs))))
 		return dec, nil
 	case DECN, NUMN:
+		if len(bs) == 0 {
+			return nil, nil
+		}
 		dec, err := NewDecimal(ASEDecimalDefaultPrecision, ASEDecimalDefaultScale)
 		if err != nil {
 			return nil, fmt.Errorf("error creating decimal: %w", err)

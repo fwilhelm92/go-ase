@@ -52,13 +52,23 @@ func (rows *Rows) Close() error {
 	return nil
 }
 
+type Scanner interface {
+	Scan(src interface{}) error
+}
+
 func (rows *Rows) Next(dst []driver.Value) error {
 	_, err := rows.Conn.Channel.NextPackageUntil(context.Background(), true,
 		func(pkg tds.Package) (bool, error) {
 			switch typed := pkg.(type) {
 			case *tds.RowPackage:
 				for i := range dst {
-					dst[i] = typed.DataFields[i].Value()
+					if scanner, ok := dst[i].(Scanner); ok {
+						if err := scanner.Scan(typed.DataFields[i].Value()); err != nil {
+							return true, fmt.Errorf("failing while scanning value %v: %w", typed.DataFields[i].Value(), err)
+						}
+					} else {
+						dst[i] = typed.DataFields[i].Value()
+					}
 				}
 				return true, nil
 			case *tds.RowFmtPackage:
