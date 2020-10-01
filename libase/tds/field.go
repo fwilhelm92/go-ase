@@ -417,23 +417,40 @@ func (field fieldDataBase) writeTo(ch BytesChannel) (int, error) {
 		return n, err
 	}
 
-	bs, err := field.fmt.DataType().Bytes(endian, field.value)
-	if err != nil {
-		return n, fmt.Errorf("error converting field value to bytes: %w", err)
+	// TODO
+	// Check: Column == Nullable-type?
+	//		Check: value == nil (Value of sql.interface)
+	//			True: Don't use bytes, just write length
+	//			False: Write value as usual
+
+	if fmtStatus(field.fmt.Status())&tdsFmtNullAllowed == tdsFmtNullAllowed {
+		// TODO: Get column-status working
 	}
 
-	if !field.fmt.IsFixedLength() {
-		if err := writeLengthBytes(ch, field.fmt.LengthBytes(), int64(len(bs))); err != nil {
+	var bs []byte
+
+	// Only use Bytes() if field.value != nil
+	if field.value != nil {
+		bs, err = field.fmt.DataType().Bytes(endian, field.value)
+		if err != nil {
+			return n, fmt.Errorf("error converting field value to bytes: %w", err)
+		}
+		if !field.fmt.IsFixedLength() {
+			if err := writeLengthBytes(ch, field.fmt.LengthBytes(), int64(len(bs))); err != nil {
+				return n, fmt.Errorf("failed to write data length: %w", err)
+			}
+			n += field.fmt.LengthBytes()
+		}
+		err = ch.WriteBytes(bs)
+		if err != nil {
+			return n, fmt.Errorf("failed to write field data: %w", err)
+		}
+		n += len(bs)
+	} else {
+		if err := writeLengthBytes(ch, 0, 0); err != nil {
 			return n, fmt.Errorf("failed to write data length: %w", err)
 		}
-		n += field.fmt.LengthBytes()
 	}
-
-	err = ch.WriteBytes(bs)
-	if err != nil {
-		return n, fmt.Errorf("failed to write field data: %w", err)
-	}
-	n += len(bs)
 
 	return n, nil
 }
@@ -1133,6 +1150,7 @@ func readLengthBytes(ch BytesChannel, n int) (int, error) {
 	if err != nil {
 		return 0, ErrNotEnoughBytes
 	}
+
 	return length, nil
 }
 

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-// This example shows a simple interaction with a TDS server using the
+// This example shows how to use sql.Nulltypes using the
 // database/sql interface and the pure go driver.
 package main
 
@@ -53,18 +53,9 @@ func DoMain() error {
 	}
 
 	for _, sample := range samples {
-		// TODO Handle writing of NullTypes
 		val, err := sample.Value()
 		if err != nil {
 			return fmt.Errorf("failed to evaluate sample: %w", err)
-		}
-		if val == nil {
-			fmt.Printf("Writing a=%v to table\n", val)
-			if _, err = db.Exec("insert into nullTypes values (null)"); err != nil {
-				fmt.Println(err)
-				return fmt.Errorf("failed to insert values: %w", err)
-			}
-			continue
 		}
 		fmt.Printf("Writing a=%v to table\n", val)
 		if _, err = db.Exec("insert into nullTypes values (?)", val); err != nil {

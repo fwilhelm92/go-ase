@@ -11,6 +11,24 @@ import (
 )
 
 func (t DataType) ConvertValue(v interface{}) (driver.Value, error) {
+	// Actually, if working with NullTypes and/or declaring the
+	// ASE-column e.g. as 'BigInt null' the type t should be INTN.
+	// Instead it is INT8
+	// -> Is ASE telling us that we should use INT8 no matter what we
+	//    do?
+	// OR
+	// -> Are we telling ASE that we want to use INT8 instead of INTN
+	//    (wrong mapping or the like)?
+	//fmt.Printf("\tdataType t: %v\n", t)
+
+	// Check if it is a nil-value (nil-value should/could not be
+	// converted)
+	// TODO: What should be returned?
+	// (Cannot use sv.IsNil() since it would panic [see IsNil()-doc])
+	if v == nil {
+		return nil, nil
+	}
+
 	sv := reflect.ValueOf(v)
 
 	// Return value as-is if the type already matches.

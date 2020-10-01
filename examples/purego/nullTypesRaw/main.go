@@ -17,9 +17,8 @@ import (
 	ase "github.com/SAP/go-ase/purego"
 )
 
-// This example shows how to use nested transactions using the
-// database/sql interface and the pure go driver.
-
+// This example shows how to use sql.Nulltypes using the
+// database/sql interface, prepared statements and the pure go driver.
 func main() {
 	if err := DoMain(); err != nil {
 		log.Fatalf("nullTypesRaw: %v", err)
@@ -67,7 +66,7 @@ func rawProcess(driverConn interface{}) error {
 	}
 
 	fmt.Println("creating table nullTypesRaw")
-	if _, _, err := conn.DirectExec(context.Background(), "if object_id('nullTypesRaw') is not null drop table simple"); err != nil {
+	if _, _, err := conn.DirectExec(context.Background(), "if object_id('nullTypesRaw') is not null drop table nullTypesRaw"); err != nil {
 		return fmt.Errorf("failed to drop table 'nullTypesRaw': %w", err)
 	}
 
@@ -87,21 +86,13 @@ func rawProcess(driverConn interface{}) error {
 	}
 
 	for _, sample := range samples {
-		// TODO Handle writing of NullTypes
 		val, err := sample.Value()
 		if err != nil {
 			return fmt.Errorf("failed to evaluate sample: %w", err)
 		}
-		if val == nil {
-			fmt.Printf("Writing a=%v to table\n", val)
-			if _, _, err := conn.DirectExec(context.Background(), "insert into nullTypesRaw values (null)"); err != nil {
-				return fmt.Errorf("failed to insert values: %w", err)
-			}
-			continue
-		}
 
-		fmt.Printf("Writing a=%v to table\n", sample.Int64)
-		if _, _, err := conn.DirectExec(context.Background(), "insert into nullTypesRaw values (?)", sample.Int64); err != nil {
+		fmt.Printf("Writing a=%v to table\n", val)
+		if _, _, err := conn.DirectExec(context.Background(), "insert into nullTypesRaw values (?)", val); err != nil {
 			return fmt.Errorf("failed to insert values: %w", err)
 		}
 	}

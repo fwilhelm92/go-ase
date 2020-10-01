@@ -237,6 +237,19 @@ func (stmt Stmt) GenericExec(ctx context.Context, args []driver.NamedValue) (dri
 	stmt.Reset()
 
 	if stmt.paramFmt != nil {
+
+		// EXPERIMENTAL
+		// Set field.status and investigate if ASE accepts a sent
+		// param-status
+		// (Has to be set here, since its only used for prepared
+		// statements)
+		for _, field := range stmt.paramFmt.Fmts {
+			// TDS_PARAM_COLUMNSTATUS returns error:
+			// "received EED messages: 1622: Type '0' not implemented."
+			field.SetStatus(uint(tds.TDS_PARAM_COLUMNSTATUS))
+			//field.SetStatus(uint(tds.TDS_PARAM_NULLALLOWED))
+		}
+
 		err := stmt.conn.Channel.QueuePackage(ctx, stmt.paramFmt)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error queueing dynamic statement parameter format: %w", err)
