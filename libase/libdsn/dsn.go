@@ -29,6 +29,11 @@ type Info struct {
 
 	ClientHostname string `json:"client-hostname"`
 
+	// TODO: Doc in README
+	NotifyLanguageChange bool `json:"notify-language-change"`
+	NotifyCharsetChange  bool `json:"notify-charset-change"`
+	NotifyDatabaseChange bool `json:"notify-database-change"`
+
 	PacketReadTimeout int `json:"packet-read-timeout"`
 
 	TLSEnable         bool   `json:"tls"`
@@ -43,6 +48,9 @@ type Info struct {
 func NewInfo() *Info {
 	dsn := &Info{}
 	dsn.PacketReadTimeout = 50
+	dsn.NotifyLanguageChange = true
+	dsn.NotifyCharsetChange = true
+	dsn.NotifyDatabaseChange = true
 	dsn.ConnectProps = url.Values{}
 	return dsn
 }

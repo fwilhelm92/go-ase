@@ -15,6 +15,7 @@ import (
 
 var (
 	fInputFile = flag.String("f", "", "Read SQL commands from file")
+	fJson      = flag.Bool("json", false, "Read SQL command from input and output json-format")
 )
 
 func Entrypoint(db *sql.DB) error {

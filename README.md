@@ -325,6 +325,30 @@ limitations this will be cut off after 30 characters.
 
 Defaults to the hostname of the machine, acquired using `os.Hostname`.
 
+##### notify-language-change
+
+Recognized values: bool
+
+Activates notifications about language changes.
+
+Defaults to true.
+
+##### notify-charset-change
+
+Recognized values: bool
+
+Activates notifications about charset changes.
+
+Defaults to true.
+
+##### notify-database-change
+
+Recognized values: bool
+
+Activates notifications about database changes.
+
+Defaults to true.
+
 ##### packet-read-timeout
 
 Recognized values: integer

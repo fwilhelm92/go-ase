@@ -59,6 +59,12 @@ func Dsn() (*libdsn.Info, error) {
 		dsn.Database = *fDatabase
 	}
 
+	if *fJson {
+		dsn.NotifyLanguageChange = false
+		dsn.NotifyCharsetChange = false
+		dsn.NotifyDatabaseChange = false
+	}
+
 	for _, fOpt := range fOpts.Slice() {
 		split := strings.SplitN(fOpt, "=", 2)
 		opt := split[0]

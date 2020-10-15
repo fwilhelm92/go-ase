@@ -149,7 +149,11 @@ func (config *LoginConfig) pack() (Package, error) {
 	}
 
 	// lusedb
-	err = buf.WriteByte(1)
+	if config.DSN.NotifyDatabaseChange {
+		err = buf.WriteByte(1)
+	} else {
+		err = buf.WriteByte(0)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error writing usedb: %w", err)
 	}
@@ -253,7 +257,11 @@ func (config *LoginConfig) pack() (Package, error) {
 	}
 
 	// lsetlang - notify of language changes
-	err = buf.WriteByte(1)
+	if config.DSN.NotifyLanguageChange {
+		err = buf.WriteByte(1)
+	} else {
+		err = buf.WriteByte(0)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error writing setlang: %w", err)
 	}
@@ -315,7 +323,11 @@ func (config *LoginConfig) pack() (Package, error) {
 	}
 
 	// lsetcharset - notify of charset changes
-	err = buf.WriteByte(1)
+	if config.DSN.NotifyCharsetChange {
+		err = buf.WriteByte(1)
+	} else {
+		err = buf.WriteByte(0)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error writing setcharset: %w", err)
 	}

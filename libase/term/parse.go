@@ -5,8 +5,10 @@
 package term
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"github.com/SAP/go-ase/libase/jsonOutput"
 	"strings"
 )
 
@@ -14,7 +16,9 @@ func ParseAndExecQueries(db *sql.DB, line string) error {
 	builder := strings.Builder{}
 	currentlyQuoted := false
 
-	for _, chr := range line {
+	var queries []string
+
+	for i, chr := range line {
 		switch chr {
 		case '"', '\'':
 			if currentlyQuoted {
@@ -28,9 +32,22 @@ func ParseAndExecQueries(db *sql.DB, line string) error {
 			if currentlyQuoted {
 				builder.WriteRune(chr)
 			} else {
-				err := process(db, builder.String())
-				if err != nil {
-					return fmt.Errorf("term: failed to process query: %w", err)
+				if *fJson {
+					// If builder contains query -> append parsed queries
+					if builder.Len() != 0 {
+						query := strings.TrimLeft(builder.String(), " ")
+						queries = append(queries, query)
+					}
+					// if line ended, give 'queries' to ExecQuery
+					if i == (len(line) - 1) {
+						if err := jsonOutput.Process(context.Background(), db, queries); err != nil {
+							return fmt.Errorf("term: failed to process query to json: %w", err)
+						}
+					}
+				} else {
+					if err := process(db, builder.String()); err != nil {
+						return fmt.Errorf("term: failed to process query: %w", err)
+					}
 				}
 				builder.Reset()
 			}
@@ -40,8 +57,7 @@ func ParseAndExecQueries(db *sql.DB, line string) error {
 	}
 
 	if builder.String() != "" {
-		err := process(db, builder.String())
-		if err != nil {
+		if err := process(db, builder.String()); err != nil {
 			return fmt.Errorf("term: failed to process query: %w", err)
 		}
 	}
